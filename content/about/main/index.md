@@ -1,18 +1,18 @@
 ---
 ## Configure page content in wide column
-title: "Why apéro?" # leave blank to exclude
+title: "$whoami" # leave blank to exclude
 number_featured: 1 # pulling from mainSections in config.toml
 use_featured: false # if false, use most recent by date
 number_categories: 3 # set to zero to exclude
 show_intro: true
 intro: |
-  Apéro is a unique kind of casual get-together in French culture, when you gather with friends and get to know each other better over some apéritifs, snacks, and anything in between. A good apéro is one where you'd happily spend a few hours just hanging out.
-  
-  I hope this theme helps you create your own virtual apéro. A place where you and your site's visitors enjoy spending time, and one that helps folks get to know you better. 
-show_outro: true
-outro: |
-  <i class="fas fa-glass-cheers pr2"></i>Sincere thanks to [Maëlle Salmon](https://masalmon.eu/) for her help naming this Hugo theme!
----
+  Hi 👋🏻, I’m a senior high school student from New Delhi, India and I want to pursue deep learning in my higher education. I spent the last 2 years studying Machine Learning having completed multiple specialisations from deeplearning.ai, Google, IBM, Imperial College London, the OpenMined Udacity Course and many other courses.
 
-** index doesn't contain a body, just front matter above.
-See about/list.html in the layouts folder **
+  Before that, I’ve worked as a Front-End Developer with 6 months of internship experience in a leading educational startup. I also have a tech firm which I started with a couple of friends and we take industry projects for App and Web development. I’ve also worked a lot with IoT and Robotics having won multiple hackathon’s and represented my projects in the National Science Exhibition consecutively for 2 years. Two of my projects on Fake News Classification and Regression Analysis of Primary Biliary Cirrhosis are currently being mentored by Intel under the AI 4 Youth program.
+
+  I'm an incoming freshman at the University of Edinburgh (Bsc Hons Artificial Intelligence and Computer Science)
+
+  I’m currently learning about Attention, Self-Supervised Representation Learning, Graphical Models and Medical Imaging (Prognosis, some regression analysis as well).
+
+  I’ve worked a lot with Tensorflow, Pytorch, JAX Based ecosystems (Trax, Flax, Objax, …).
+---

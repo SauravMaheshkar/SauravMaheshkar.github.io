@@ -11,13 +11,13 @@ weight: 1
 
 **Key Takeaway:** The authors introduce RigL - an algorithm for training sparse neural networks while maintaining memory and computational cost proportional to density of the network. RigL achieves higher quality than all previous techniques for a given computational cost. RigL can find more accurate models than the current best dense-to-sparse training algorithms. Provide insight as to why allowing the topology of non-zero weights to change over the course of training aids optimization.
 
-# Introduction
+## Introduction
 
 Many applications require sparse neural networks due to space or inference time restrictions. There is a large body of work on training dense networks to yield sparse networks for inference, but this **limits the size of the largest trainable sparse model to that of the largest trainable dense model**. In this paper, the authors introduce a method to train sparse neural networks with a fixed parameter count annd a fixed computational cost throughout training without sacrificing accuracy.
 
 This method updates the topology of the sparse network during training by using parameter magnitudes and infrequent gradient calculations.
 
-# Current Limitations
+## Current Limitations
 
 Currently, the most accurate sparse models are obtained with techniques that require, at a minimum, the cost of training a dense model in terms of memory and FLOPs. This paradigm has 2 main limitations:
 
@@ -26,9 +26,9 @@ Currently, the most accurate sparse models are obtained with techniques that req
 
 The Lottery Ticket Hypothesis hypothesized that if we can find a sparse neural network with iterative pruning, then we can train that sparse neural network from scratch, to the same level of accuracy, by starting from the initial conditions.
 
-# The RigL Method
+## The RigL Method
 
-![alt]({{ site.url }}{{ site.baseurl }}/assets/images/rigl/rigl.png)
+![alt](/img/rigl/rigl.png)
 
 RigL starts with a random sparse network, and at regularly spaced intervals it removes a fraction of connections based on their magnitudes and activates new ones using instantaneous gradient information. There are 4 main parts of the algorithm:
 
@@ -37,14 +37,14 @@ RigL starts with a random sparse network, and at regularly spaced intervals it r
 3. Drop Criterion
 4. Grow Criterion
 
-## Notation
+### Notation
 
 - Given a dataset $D$ with individual samples $x_i$ and targets  $y_i$ , the aim is to minimize the loss function $\sum_{i} L (f_{\theta}(x_i), y_i)$ , where $f_{\theta}(.)$ is a neural network with parameters $\theta \in \mathbb{R}^{N}$.
 - Parameters of the $l^{th}$ layer are denoted with $\theta^{l}$ which is a length $N^{l}$ vector.
 - A sparse layer keeps only a fraction $s^{l} \in (0,1)$ of its connections and parameterized with vector $\theta^{l}$ of length $(1 - s^{l})N^{l}$.
 - The overall sparsity of the network is defined as the ratio of zeros to the total parameter count $S = \frac{\sum_{l} s^{l} N^{l} }{N}$
 
-## Sparsity Distribution
+### Sparsity Distribution
 
 The following 3 strategies were considered:
 
@@ -54,7 +54,7 @@ The following 3 strategies were considered:
 
 $$1 - \frac{n^{l-1} + n^{l} + w^{l} + h^l}{n^{l-1}*n^{l}*w^{l}*h^{l}} \, \, \, \, \, \,(1)$$
 
-## Update Schedule
+### Update Schedule
 
 The update schedule is defined by the following parameters:
 
@@ -65,14 +65,14 @@ The update schedule is defined by the following parameters:
 
 $$f_{decay}(t \, ; \alpha, T_{end} ) = \frac{\alpha}{2} \left ( 1 + cos(\frac{t \pi}{T_{end}}) \right )$$
 
-## Drop Criterion
+### Drop Criterion
 
-Every $\Delta {T}$ steps we drop the connections given by
+Every $\Delta {T}$, steps we drop the connections given by
 
 $$ArgTopK(-|\theta^{l}|, (1 - s^{l})N^{l})$$
 
 where $ArgTopK(v,k)$ gives the indices of the top-$k$ elements of vector $v$.
 
-## Grow Criterion
+### Grow Criterion
 
-We grow the connections with highest magnitude gradients. Newly activated connections are **initialized to zero** and therfore don't affect the output of the network.
+We grow the connections with highest magnitude gradients. Newly activated connections are **initialized to zero** and therefore don't affect the output of the network.
