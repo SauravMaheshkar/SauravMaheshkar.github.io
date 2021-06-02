@@ -1,5 +1,6 @@
 <head>
   {{ partial "meta.html" . }}
+  {{ partial "mathjax_support.html" . }}
   {{ template "_internal/schema.html" . }}
   {{ template "_internal/google_analytics_async.html" . }}
   {{ `<!--[if IE]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->` | safeHTML }}
@@ -16,4 +17,5 @@
   <!-- headroom.js -->
   {{ $mainJs := resources.Get "js/main.js" | js.Build "main.js" | minify | fingerprint }}
   <script src="{{ $mainJs.RelPermalink }}" type="text/javascript"></script>
+
 </head>
