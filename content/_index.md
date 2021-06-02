@@ -10,6 +10,6 @@ show_action_link: true
 show_social_links: true
 subtitle: Technical Author at Weights and Biases. Budding Deep Learning Researcher
 text_align_left: false
-title: Hi 👋🏻
+title: 👋🏻Saurav Maheshkar
 type: home
 ---
