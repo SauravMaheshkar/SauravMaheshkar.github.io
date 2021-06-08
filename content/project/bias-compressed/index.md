@@ -7,7 +7,7 @@ categories:
 date: "2021-03-03"
 draft: false
 excerpt: Minimal Reproducibility Study of (https://arxiv.org/abs/1911.05248). Experiments with Compression of Deep Neural Networks
-layout: single-sidebar
+layout: single
 links:
 - icon: door-open
   icon_pack: fas

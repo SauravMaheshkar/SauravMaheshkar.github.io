@@ -7,7 +7,7 @@ date: "2021-05-31"
 draft: false
 excerpt: Stellarflare is a Tensorflow package for detecting Stellar Flares
 featured: true
-layout: single-sidebar
+layout: single
 links:
 - icon: door-open
   icon_pack: fas
