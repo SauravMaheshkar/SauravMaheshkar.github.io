@@ -1,0 +1,221 @@
+<!doctype html><html lang=en dir=ltr><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=generator content="Hugo 0.83.1"><title>Named Entity Recognition using Reformer | Saurav Maheshkar</title><meta property="twitter:site" content="@MaheshkarSaurav"><meta property="twitter:creator" content="@MaheshkarSaurav"><meta name=description content="Exploring Named Entity Recognition and implementing a Reformer using the Trax framework"><meta property="og:site_name" content="Saurav Maheshkar"><meta property="og:title" content="Named Entity Recognition using Reformer | Saurav Maheshkar"><meta property="og:description" content="Exploring Named Entity Recognition and implementing a Reformer using the Trax framework"><meta property="og:type" content="page"><meta property="og:url" content="https://sauravm.netlify.app/blog/ner-reformer/"><meta property="og:locale" content="en"><meta property="og:image" content="https://sauravm.netlify.app/blog/ner-reformer/featured.jpg"><meta property="twitter:card" content="summary_large_image"><meta name=twitter:image content="https://sauravm.netlify.app/blog/ner-reformer/featured.jpg"><script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']],processEscapes:!0,processEnvironments:!0},options:{skipHtmlTags:['script','noscript','style','textarea','pre']}},window.addEventListener('load',a=>{document.querySelectorAll("mjx-container").forEach(function(a){a.parentElement.classList+='has-jax'})})</script><script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><meta itemprop=name content="Named Entity Recognition using Reformer"><meta itemprop=description content="Link to the Kaggle Kernel which is referenced in this post
+Introduction     Named entity recognition(NER) is the task to identify mentions of rigid designators from text belonging to predefined semantic types such as person, location, organization etc. NER always servers as the foundation of many natural language applications such as question answering, text summarization, and machine translation.
+Despite the various definitions of NE(Named Entity), researchers have reached common consensus on the types of NEs to recognize."><meta itemprop=datePublished content="2020-11-19T00:00:00+00:00"><meta itemprop=dateModified content="2020-11-19T00:00:00+00:00"><meta itemprop=wordCount content="1602"><meta itemprop=image content="https://sauravm.netlify.app/blog/ner-reformer/featured.jpg"><meta itemprop=keywords content><!--[if IE]><script src=//html5shiv.googlecode.com/svn/trunk/html5.js></script><![endif]--><link rel="shortcut icon" href=/img/favicon.ico type=image/x-icon><link rel=icon href=/img/favicon.ico type=image/x-icon><link rel=stylesheet href=/style.main.min.9fe1917e3fd8cb643bf35aa0995479b67c8cee6eeca071b3bbe20d3248308e3b.css integrity="sha256-n+GRfj/Yy2Q781qgmVR5tnyM7m7soHGzu+INMkgwjjs=" media=screen><script src=/panelset.min.d74e921a1b9af2d938fdff19e433ba539cdb202961eddae2356a54199f0653ec.js type=text/javascript></script><script src=/main.min.38a0323c5b0bbb611c4874ba2d8fdaba57d20cc2b0d704b30250c235ba8b6d49.js type=text/javascript></script></head><body><div class=grid-container><header class="site-header pt4 pb2 mb4 bb b--transparent ph5 headroom z-max" role=banner><nav class="site-nav db dt-l w-100" role=navigation><a class="site-brand db dtc-l v-mid link no-underline w-100 w-33-l tc tl-l" href=https://sauravm.netlify.app/ title=Home><img src=/img/android-chrome-256x256.png class="dib db-l h2 w-auto" alt="Saurav Maheshkar"></a><div class="site-links db dtc-l v-mid w-100 w-47-l tc tr-l mt3 mt0-l ttu tracked"><a class="link f6 f5-l dib pv1 ph2" href=/about/ title=About>About</a>
+<a class="link f6 f5-l dib pv1 ph2 active" href=/blog/ title=Blog>Blog</a>
+<a class="link f6 f5-l dib pv1 ph2" href=/project/ title="Project Portfolio">Projects</a>
+<a class="link f6 f5-l dib pv1 ph2" href=https://sauravmaheshkar.substack.com/welcome title=Newsletter>Newsletter</a></div></nav></header><main class="page-main pa4" role=main><section class="page-content mw7 center"><article class="post-content pa0 ph4-l"><header class=post-header><h1 class="f1 lh-solid measure-narrow mb3 fw4">Named Entity Recognition using Reformer</h1><p class="f6 measure lh-copy mv1">By Saurav Maheshkar in <a href=https://sauravm.netlify.app/categories/nlp>NLP</a> <a href=https://sauravm.netlify.app/categories/transformers>Transformers</a></p><p class="f7 db mv0 ttu">November 19, 2020</p></header><section class="post-body pt5 pb4"><p>Link to the
+<a href=https://www.kaggle.com/sauravmaheshkar/trax-ner-using-reformer target=_blank rel=noopener>Kaggle Kernel</a> which is referenced in this post</p><h2 id=introduction>Introduction
+<a href=#introduction><svg class="anchor-symbol" aria-hidden="true" height="26" width="26" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="currentcolor"/><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76.0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71.0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71.0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76.0 5-2.24 5-5s-2.24-5-5-5z"/></svg></a></h2><p>Named entity recognition(NER) is the task to identify mentions of rigid designators from text belonging to predefined semantic types such as person, location, organization etc. NER always servers as the foundation of many natural language applications such as question answering, text summarization, and machine translation.</p><p>Despite the various definitions of NE(Named Entity), researchers have reached common consensus on the types of NEs to recognize. We generally divide NEs into two categories:</p><ul><li><strong>Generic NEs:</strong> Person and Location</li><li><strong>Domain-specific NEs:</strong> proteins, enzymes, and genes.</li></ul><p>4 mainstream approaches used in NER are:</p><ul><li><strong>Rule-Based Approaches:</strong> Don’t need annotated data as they rule on hand-crafted rules</li><li><strong>Unsupervised Learning Approaches:</strong> Rely on unsupervised algorithms without hand-labelled training examples</li><li><strong>Feature-based Supervised Learning:</strong> Rely on supervised algorithms with a lot of feature engineering involved</li><li><strong>Deep Learning Approaches:</strong> Automatically discover representations from raw input</li></ul><h2 id=formal-definition>Formal Definition
+<a href=#formal-definition><svg class="anchor-symbol" aria-hidden="true" height="26" width="26" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="currentcolor"/><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76.0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71.0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71.0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76.0 5-2.24 5-5s-2.24-5-5-5z"/></svg></a></h2><p>A named entity (NE) is a word or a phrase that clearly identifies one item from a set of other items that have similar attributes. Examples being organizations, person, location names. NER is the process of locating and classifying named entities in text into predefined entity categories.</p><p>Formally, given a sequence of tokens $ s = {w_1,w_2,…,w_N} $, NER outputs a list of tuples $ {I_s, I_e, t} $, each of which is a named entity mentioned in $ s $. Here, $ I_s \in [1, N] $ and $ I_e \in [1, N] $ are the start and end indexes of a NER; t is an entity type from a predefined category set.</p><p><img src=/img/reformer/NER-1.png alt=alt></p><h2 id=evaluation>Evaluation
+<a href=#evaluation><svg class="anchor-symbol" aria-hidden="true" height="26" width="26" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="currentcolor"/><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76.0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71.0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71.0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76.0 5-2.24 5-5s-2.24-5-5-5z"/></svg></a></h2><p>NER systems are usually evaluated by comparing their outputs against human annotations. The comparison can be quantified by either exact-match or relaxed match.</p><h2 id=deep-learning-techniques-for-ner>Deep Learning Techniques for NER
+<a href=#deep-learning-techniques-for-ner><svg class="anchor-symbol" aria-hidden="true" height="26" width="26" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="currentcolor"/><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76.0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71.0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71.0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76.0 5-2.24 5-5s-2.24-5-5-5z"/></svg></a></h2><p>There are three core strengths of applying deep learning techniques to NER.</p><ol><li>NER benefits from the non-linear transformations, which generates non-linear mappings from input to output. DL models are able to learn complex and intricate features from data compared to linear models (log-linear HMM, linear chain CRF).</li><li>DL saves a significant amount of effort on designing NER features. The traditional models required a considerable amount of engineering skill and domain expertise.</li><li>Deep NER models can be trained on an end-to-end paradigm which enables us to build complex NER systems.</li></ol><h2 id=general-deep-learning-architecture-for-ner>General Deep Learning Architecture for NER
+<a href=#general-deep-learning-architecture-for-ner><svg class="anchor-symbol" aria-hidden="true" height="26" width="26" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="currentcolor"/><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76.0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71.0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71.0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76.0 5-2.24 5-5s-2.24-5-5-5z"/></svg></a></h2><p><img src=/img/reformer/NER-2.png alt=alt></p><ul><li><strong>Distributed representations for input</strong> consider word- and character-level embeddings as well as the incorporation of additional features.</li><li><strong>Context encoder</strong> is to capture the context dependencies using CNN, RNN, or other networks.</li><li><strong>Tag decoder</strong> predicts tags for tokens in the input sentence.</li></ul><h1 id=introduction-to-transformers>Introduction to Transformers
+<a href=#introduction-to-transformers></a></h1><h2 id=motivation>Motivation
+<a href=#motivation><svg class="anchor-symbol" aria-hidden="true" height="26" width="26" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="currentcolor"/><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76.0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71.0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71.0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76.0 5-2.24 5-5s-2.24-5-5-5z"/></svg></a></h2><p>Traditional architectures like Recurrent Neural Network or Convolutional Neural Networks ( where we use encoders to encode sentences into representations and then decode these representations into our desired format ) for sequence transduction tasks ( language modelling and machine translation ) have shown promising results but they are affected by long sequence lengths. Although using conditional computations and certain factorisation tricks have resulted in increased computational efficiency but the constraints of sequence computation still remain. Thus, this new architecture relies entirely on attention mechanisms to draw global dependencies between input and output sequences.</p><p>Using self-attention we can:</p><ul><li>Reduce the Computational Complexity per layer</li><li>Parallelize more computations</li><li>Capture long-range dependencies effectively</li></ul><h2 id=the-architecture>The Architecture
+<a href=#the-architecture><svg class="anchor-symbol" aria-hidden="true" height="26" width="26" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="currentcolor"/><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76.0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71.0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71.0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76.0 5-2.24 5-5s-2.24-5-5-5z"/></svg></a></h2><p>As mentioned earlier, the earlier neural sequence transduction models had an encoder-decoder structure. Where the encoder mapped an input sequence $ (x_1, &mldr;, x_n) $ into a sequence of representations $ z = (z_1, &mldr;, z_n) $ and then given $z$ , the decoder generates an output $ (y_1, &mldr;, y_n) $. As the model is auto-regressive in nature, it takes as input the previously generated symbols as an additional input.</p><p><img src=/img/reformer/NER-3.png alt=alt></p><h2 id=attention-scaled-dot-product>Attention: Scaled Dot-Product
+<a href=#attention-scaled-dot-product><svg class="anchor-symbol" aria-hidden="true" height="26" width="26" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="currentcolor"/><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76.0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71.0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71.0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76.0 5-2.24 5-5s-2.24-5-5-5z"/></svg></a></h2><p>$$ Attention(Q,K,V) = softmax(\frac{QK^T}{\sqrt{d_k}})V $$</p><p>The inputs are:</p><ul><li>queries and keys of dimensions $ d_k $</li><li>values of dimensions $ d_v $</li></ul><h1 id=implementing-ner-using-trax>Implementing NER using Trax
+<a href=#implementing-ner-using-trax></a></h1><p>Install the latest version of the
+<a href=https://github.com/google/trax target=_blank rel=noopener>Trax</a> Library.</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#a61717;background-color:#e3d2d2>!</span>pip install <span style=color:#000;font-weight:700>-</span>q <span style=color:#000;font-weight:700>-</span>U trax
+</code></pre></div><h2 id=importing-packages>Importing Packages
+<a href=#importing-packages><svg class="anchor-symbol" aria-hidden="true" height="26" width="26" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="currentcolor"/><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76.0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71.0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71.0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76.0 5-2.24 5-5s-2.24-5-5-5z"/></svg></a></h2><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#000;font-weight:700>import</span> <span style=color:#555>trax</span> <span style=color:#998;font-style:italic># Our Main Library</span>
+<span style=color:#000;font-weight:700>from</span> <span style=color:#555>trax</span> <span style=color:#000;font-weight:700>import</span> layers <span style=color:#000;font-weight:700>as</span> tl
+<span style=color:#000;font-weight:700>import</span> <span style=color:#555>os</span> <span style=color:#998;font-style:italic># For os dependent functionalities</span>
+<span style=color:#000;font-weight:700>import</span> <span style=color:#555>numpy</span> <span style=color:#000;font-weight:700>as</span> <span style=color:#555>np</span> <span style=color:#998;font-style:italic># For scientific computing</span>
+<span style=color:#000;font-weight:700>import</span> <span style=color:#555>pandas</span> <span style=color:#000;font-weight:700>as</span> <span style=color:#555>pd</span> <span style=color:#998;font-style:italic># For basic data analysis</span>
+<span style=color:#000;font-weight:700>import</span> <span style=color:#555>random</span> <span style=color:#000;font-weight:700>as</span> <span style=color:#555>rnd</span> <span style=color:#998;font-style:italic># For using random functions</span>
+</code></pre></div><h2 id=pre-processing>Pre-Processing
+<a href=#pre-processing><svg class="anchor-symbol" aria-hidden="true" height="26" width="26" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="currentcolor"/><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76.0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71.0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71.0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76.0 5-2.24 5-5s-2.24-5-5-5z"/></svg></a></h2><p>Let&rsquo;s load the <code>ner_dataset.csv</code> file into a dataframe and see what it looks like</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>data <span style=color:#000;font-weight:700>=</span> pd<span style=color:#000;font-weight:700>.</span>read_csv(<span style=color:#d14>&#34;/kaggle/input/entity-annotated-corpus/ner_dataset.csv&#34;</span>,encoding <span style=color:#000;font-weight:700>=</span> <span style=color:#d14>&#39;ISO-8859-1&#39;</span>)
+data <span style=color:#000;font-weight:700>=</span> data<span style=color:#000;font-weight:700>.</span>fillna(method <span style=color:#000;font-weight:700>=</span> <span style=color:#d14>&#39;ffill&#39;</span>)
+data<span style=color:#000;font-weight:700>.</span>head()
+</code></pre></div><p>We can see there&rsquo;s a column for the words in each sentence. Thus, we can extract this column using the <code>.loc()</code> and store it into a <code>.txt</code> file using the <code>.savetext()</code> function from numpy.</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#998;font-style:italic>## Extract the &#39;Word&#39; column from the dataframe</span>
+words <span style=color:#000;font-weight:700>=</span> data<span style=color:#000;font-weight:700>.</span>loc[:, <span style=color:#d14>&#34;Word&#34;</span>]
+
+<span style=color:#998;font-style:italic>## Convert into a text file using the .savetxt() function</span>
+np<span style=color:#000;font-weight:700>.</span>savetxt(<span style=color:#d14>r</span><span style=color:#d14>&#39;words.txt&#39;</span>, words<span style=color:#000;font-weight:700>.</span>values, fmt<span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;</span><span style=color:#d14>%s</span><span style=color:#d14>&#34;</span>)
+</code></pre></div><p>Here, we create a Dictionary for our vocabulary by reading through all the sentences in the dataset.</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>vocab <span style=color:#000;font-weight:700>=</span> {}
+<span style=color:#000;font-weight:700>with</span> <span style=color:#0086b3>open</span>(<span style=color:#d14>&#39;words.txt&#39;</span>) <span style=color:#000;font-weight:700>as</span> f:
+  <span style=color:#000;font-weight:700>for</span> i, l <span style=color:#000;font-weight:700>in</span> <span style=color:#0086b3>enumerate</span>(f<span style=color:#000;font-weight:700>.</span>read()<span style=color:#000;font-weight:700>.</span>splitlines()):
+    vocab[l] <span style=color:#000;font-weight:700>=</span> i
+  <span style=color:#000;font-weight:700>print</span>(<span style=color:#d14>&#34;Number of words:&#34;</span>, <span style=color:#0086b3>len</span>(vocab))
+  vocab[<span style=color:#d14>&#39;&lt;PAD&gt;&#39;</span>] <span style=color:#000;font-weight:700>=</span> <span style=color:#0086b3>len</span>(vocab)
+</code></pre></div><p>For extracting sentences from the dataset and creating <code>(X,y)</code> pairs for training.</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#000;font-weight:700>class</span> <span style=color:#458;font-weight:700>Get_sentence</span>(<span style=color:#0086b3>object</span>):
+    <span style=color:#000;font-weight:700>def</span> __init__(<span style=color:#999>self</span>,data):
+        <span style=color:#999>self</span><span style=color:#000;font-weight:700>.</span>n_sent<span style=color:#000;font-weight:700>=</span><span style=color:#099>1</span>
+        <span style=color:#999>self</span><span style=color:#000;font-weight:700>.</span>data <span style=color:#000;font-weight:700>=</span> data
+        agg_func <span style=color:#000;font-weight:700>=</span> <span style=color:#000;font-weight:700>lambda</span> s:[(w,p,t) <span style=color:#000;font-weight:700>for</span> w,p,t <span style=color:#000;font-weight:700>in</span> <span style=color:#0086b3>zip</span>(s[<span style=color:#d14>&#34;Word&#34;</span>]<span style=color:#000;font-weight:700>.</span>values<span style=color:#000;font-weight:700>.</span>tolist(),
+                                                     s[<span style=color:#d14>&#34;POS&#34;</span>]<span style=color:#000;font-weight:700>.</span>values<span style=color:#000;font-weight:700>.</span>tolist(),
+                                                     s[<span style=color:#d14>&#34;Tag&#34;</span>]<span style=color:#000;font-weight:700>.</span>values<span style=color:#000;font-weight:700>.</span>tolist())]
+        <span style=color:#999>self</span><span style=color:#000;font-weight:700>.</span>grouped <span style=color:#000;font-weight:700>=</span> <span style=color:#999>self</span><span style=color:#000;font-weight:700>.</span>data<span style=color:#000;font-weight:700>.</span>groupby(<span style=color:#d14>&#34;Sentence #&#34;</span>)<span style=color:#000;font-weight:700>.</span>apply(agg_func)
+        <span style=color:#999>self</span><span style=color:#000;font-weight:700>.</span>sentences <span style=color:#000;font-weight:700>=</span> [s <span style=color:#000;font-weight:700>for</span> s <span style=color:#000;font-weight:700>in</span> <span style=color:#999>self</span><span style=color:#000;font-weight:700>.</span>grouped]
+
+getter <span style=color:#000;font-weight:700>=</span> Get_sentence(data)
+sentence <span style=color:#000;font-weight:700>=</span> getter<span style=color:#000;font-weight:700>.</span>sentences
+
+words <span style=color:#000;font-weight:700>=</span> <span style=color:#0086b3>list</span>(<span style=color:#0086b3>set</span>(data[<span style=color:#d14>&#34;Word&#34;</span>]<span style=color:#000;font-weight:700>.</span>values))
+words_tag <span style=color:#000;font-weight:700>=</span> <span style=color:#0086b3>list</span>(<span style=color:#0086b3>set</span>(data[<span style=color:#d14>&#34;Tag&#34;</span>]<span style=color:#000;font-weight:700>.</span>values))
+
+word_idx <span style=color:#000;font-weight:700>=</span> {w : i<span style=color:#000;font-weight:700>+</span><span style=color:#099>1</span> <span style=color:#000;font-weight:700>for</span> i ,w <span style=color:#000;font-weight:700>in</span> <span style=color:#0086b3>enumerate</span>(words)}
+tag_idx <span style=color:#000;font-weight:700>=</span>  {t : i <span style=color:#000;font-weight:700>for</span> i ,t <span style=color:#000;font-weight:700>in</span> <span style=color:#0086b3>enumerate</span>(words_tag)}
+
+X <span style=color:#000;font-weight:700>=</span> [[word_idx[w[<span style=color:#099>0</span>]] <span style=color:#000;font-weight:700>for</span> w <span style=color:#000;font-weight:700>in</span> s] <span style=color:#000;font-weight:700>for</span> s <span style=color:#000;font-weight:700>in</span> sentence]
+y <span style=color:#000;font-weight:700>=</span> [[tag_idx[w[<span style=color:#099>2</span>]] <span style=color:#000;font-weight:700>for</span> w <span style=color:#000;font-weight:700>in</span> s] <span style=color:#000;font-weight:700>for</span> s <span style=color:#000;font-weight:700>in</span> sentence]
+</code></pre></div><p>Here, we create a batch generator for training.</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#000;font-weight:700>def</span> <span style=color:#900;font-weight:700>data_generator</span>(batch_size, x, y,pad, shuffle<span style=color:#000;font-weight:700>=</span><span style=color:#999>False</span>, verbose<span style=color:#000;font-weight:700>=</span><span style=color:#999>False</span>):
+
+    num_lines <span style=color:#000;font-weight:700>=</span> <span style=color:#0086b3>len</span>(x)
+    lines_index <span style=color:#000;font-weight:700>=</span> [<span style=color:#000;font-weight:700>*</span><span style=color:#0086b3>range</span>(num_lines)]
+    <span style=color:#000;font-weight:700>if</span> shuffle:
+        rnd<span style=color:#000;font-weight:700>.</span>shuffle(lines_index)
+
+    index <span style=color:#000;font-weight:700>=</span> <span style=color:#099>0</span>
+    <span style=color:#000;font-weight:700>while</span> <span style=color:#999>True</span>:
+        buffer_x <span style=color:#000;font-weight:700>=</span> [<span style=color:#099>0</span>] <span style=color:#000;font-weight:700>*</span> batch_size
+        buffer_y <span style=color:#000;font-weight:700>=</span> [<span style=color:#099>0</span>] <span style=color:#000;font-weight:700>*</span> batch_size
+
+        max_len <span style=color:#000;font-weight:700>=</span> <span style=color:#099>0</span>
+        <span style=color:#000;font-weight:700>for</span> i <span style=color:#000;font-weight:700>in</span> <span style=color:#0086b3>range</span>(batch_size):
+            <span style=color:#000;font-weight:700>if</span> index <span style=color:#000;font-weight:700>&gt;=</span> num_lines:
+                index <span style=color:#000;font-weight:700>=</span> <span style=color:#099>0</span>
+                <span style=color:#000;font-weight:700>if</span> shuffle:
+                    rnd<span style=color:#000;font-weight:700>.</span>shuffle(lines_index)
+
+            buffer_x[i] <span style=color:#000;font-weight:700>=</span> x[lines_index[index]]
+            buffer_y[i] <span style=color:#000;font-weight:700>=</span> y[lines_index[index]]
+
+            lenx <span style=color:#000;font-weight:700>=</span> <span style=color:#0086b3>len</span>(x[lines_index[index]])    
+            <span style=color:#000;font-weight:700>if</span> lenx <span style=color:#000;font-weight:700>&gt;</span> max_len:
+                max_len <span style=color:#000;font-weight:700>=</span> lenx                  
+
+            index <span style=color:#000;font-weight:700>+=</span> <span style=color:#099>1</span>
+
+        X <span style=color:#000;font-weight:700>=</span> np<span style=color:#000;font-weight:700>.</span>full((batch_size, max_len), pad)
+        Y <span style=color:#000;font-weight:700>=</span> np<span style=color:#000;font-weight:700>.</span>full((batch_size, max_len), pad)
+
+
+        <span style=color:#000;font-weight:700>for</span> i <span style=color:#000;font-weight:700>in</span> <span style=color:#0086b3>range</span>(batch_size):
+            x_i <span style=color:#000;font-weight:700>=</span> buffer_x[i]
+            y_i <span style=color:#000;font-weight:700>=</span> buffer_y[i]
+
+            <span style=color:#000;font-weight:700>for</span> j <span style=color:#000;font-weight:700>in</span> <span style=color:#0086b3>range</span>(<span style=color:#0086b3>len</span>(x_i)):
+
+                X[i, j] <span style=color:#000;font-weight:700>=</span> x_i[j]
+                Y[i, j] <span style=color:#000;font-weight:700>=</span> y_i[j]
+
+        <span style=color:#000;font-weight:700>if</span> verbose: <span style=color:#000;font-weight:700>print</span>(<span style=color:#d14>&#34;index=&#34;</span>, index)
+        <span style=color:#000;font-weight:700>yield</span>((X,Y))
+</code></pre></div><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#000;font-weight:700>from</span> <span style=color:#555>sklearn.model_selection</span> <span style=color:#000;font-weight:700>import</span> train_test_split
+x_train,x_test,y_train,y_test <span style=color:#000;font-weight:700>=</span> train_test_split(X,y,test_size <span style=color:#000;font-weight:700>=</span> <span style=color:#099>0.1</span>,random_state<span style=color:#000;font-weight:700>=</span><span style=color:#099>1</span>)
+</code></pre></div><h2 id=building-the-model>Building the Model
+<a href=#building-the-model><svg class="anchor-symbol" aria-hidden="true" height="26" width="26" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="currentcolor"/><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76.0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71.0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71.0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76.0 5-2.24 5-5s-2.24-5-5-5z"/></svg></a></h2><p>We will perform the following steps:</p><ul><li><p>Use input tensors from our data generator</p></li><li><p>Produce Semantic entries from an Embedding Layer</p></li><li><p>Feed these into our Reformer Language model</p></li><li><p>Run the Output through a Linear Layer</p></li><li><p>Run these through a log softmax layer to get predicted classes</p></li></ul><p>We use the:</p><ul><li><p><code>tl.Serial():</code> Combinator that applies layers serially(by function composition). It&rsquo;s commonly used to construct deep networks. It uses stack semantics to manage data for its sublayers</p></li><li><p><code>tl.Embedding():</code> Initializes a trainable embedding layer that maps discrete tokens/ids to vectors</p></li><li><p><code>trax.models.reformer.Reformer():</code> Creates a Reversible Transformer encoder-decoder model.</p></li><li><p><code>tl.Dense():</code> Creates a Dense(fully-connected, affine) layer</p></li><li><p><code>tl.LogSoftmax():</code> Creates a layer that applies log softmax along one tensor axis.</p></li></ul><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#000;font-weight:700>def</span> <span style=color:#900;font-weight:700>NERmodel</span>(tags, vocab_size<span style=color:#000;font-weight:700>=</span><span style=color:#099>35181</span>, d_model <span style=color:#000;font-weight:700>=</span> <span style=color:#099>50</span>):
+
+  model <span style=color:#000;font-weight:700>=</span> tl<span style=color:#000;font-weight:700>.</span>Serial(
+    <span style=color:#998;font-style:italic># tl.Embedding(vocab_size, d_model),</span>
+    trax<span style=color:#000;font-weight:700>.</span>models<span style=color:#000;font-weight:700>.</span>reformer<span style=color:#000;font-weight:700>.</span>Reformer(vocab_size, d_model, ff_activation<span style=color:#000;font-weight:700>=</span>tl<span style=color:#000;font-weight:700>.</span>LogSoftmax),
+    tl<span style=color:#000;font-weight:700>.</span>Dense(tags),
+    tl<span style=color:#000;font-weight:700>.</span>LogSoftmax()
+  )
+
+  <span style=color:#000;font-weight:700>return</span> model
+
+model <span style=color:#000;font-weight:700>=</span> NERmodel(tags <span style=color:#000;font-weight:700>=</span> <span style=color:#099>17</span>)
+</code></pre></div><h2 id=train-the-model>Train the Model
+<a href=#train-the-model><svg class="anchor-symbol" aria-hidden="true" height="26" width="26" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="currentcolor"/><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76.0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71.0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71.0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76.0 5-2.24 5-5s-2.24-5-5-5z"/></svg></a></h2><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#000;font-weight:700>from</span> <span style=color:#555>trax.supervised</span> <span style=color:#000;font-weight:700>import</span> training
+
+rnd<span style=color:#000;font-weight:700>.</span>seed(<span style=color:#099>33</span>)
+
+batch_size <span style=color:#000;font-weight:700>=</span> <span style=color:#099>64</span>
+
+train_generator <span style=color:#000;font-weight:700>=</span> trax<span style=color:#000;font-weight:700>.</span>data<span style=color:#000;font-weight:700>.</span>inputs<span style=color:#000;font-weight:700>.</span>add_loss_weights(
+    data_generator(batch_size, x_train, y_train,vocab[<span style=color:#d14>&#39;&lt;PAD&gt;&#39;</span>], <span style=color:#999>True</span>),
+    id_to_mask<span style=color:#000;font-weight:700>=</span>vocab[<span style=color:#d14>&#39;&lt;PAD&gt;&#39;</span>])
+
+eval_generator <span style=color:#000;font-weight:700>=</span> trax<span style=color:#000;font-weight:700>.</span>data<span style=color:#000;font-weight:700>.</span>inputs<span style=color:#000;font-weight:700>.</span>add_loss_weights(
+    data_generator(batch_size, x_test, y_test,vocab[<span style=color:#d14>&#39;&lt;PAD&gt;&#39;</span>] ,<span style=color:#999>True</span>),
+    id_to_mask<span style=color:#000;font-weight:700>=</span>vocab[<span style=color:#d14>&#39;&lt;PAD&gt;&#39;</span>])
+</code></pre></div><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#000;font-weight:700>def</span> <span style=color:#900;font-weight:700>train_model</span>(model, train_generator, eval_generator, train_steps<span style=color:#000;font-weight:700>=</span><span style=color:#099>1</span>, output_dir<span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;model&#39;</span>):
+    train_task <span style=color:#000;font-weight:700>=</span> training<span style=color:#000;font-weight:700>.</span>TrainTask(
+      train_generator,  
+      loss_layer <span style=color:#000;font-weight:700>=</span> tl<span style=color:#000;font-weight:700>.</span>CrossEntropyLoss(),
+      optimizer <span style=color:#000;font-weight:700>=</span> trax<span style=color:#000;font-weight:700>.</span>optimizers<span style=color:#000;font-weight:700>.</span>Adam(<span style=color:#099>0.01</span>),
+      n_steps_per_checkpoint<span style=color:#000;font-weight:700>=</span><span style=color:#099>10</span>
+    )
+
+    eval_task <span style=color:#000;font-weight:700>=</span> training<span style=color:#000;font-weight:700>.</span>EvalTask(
+      labeled_data <span style=color:#000;font-weight:700>=</span> eval_generator,
+      metrics <span style=color:#000;font-weight:700>=</span> [tl<span style=color:#000;font-weight:700>.</span>CrossEntropyLoss(), tl<span style=color:#000;font-weight:700>.</span>Accuracy()],
+      n_eval_batches <span style=color:#000;font-weight:700>=</span> <span style=color:#099>10</span>
+    )
+
+    training_loop <span style=color:#000;font-weight:700>=</span> training<span style=color:#000;font-weight:700>.</span>Loop(
+        model,
+        train_task,
+        eval_tasks <span style=color:#000;font-weight:700>=</span> eval_task,
+        output_dir <span style=color:#000;font-weight:700>=</span> output_dir)
+
+    training_loop<span style=color:#000;font-weight:700>.</span>run(n_steps <span style=color:#000;font-weight:700>=</span> train_steps)
+    <span style=color:#000;font-weight:700>return</span> training_loop
+</code></pre></div><h2 id=training>Training
+<a href=#training><svg class="anchor-symbol" aria-hidden="true" height="26" width="26" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="currentcolor"/><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76.0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71.0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71.0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76.0 5-2.24 5-5s-2.24-5-5-5z"/></svg></a></h2><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>train_steps <span style=color:#000;font-weight:700>=</span> <span style=color:#099>100</span>
+training_loop <span style=color:#000;font-weight:700>=</span> train_model(model, train_generator, eval_generator, train_steps)
+</code></pre></div><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>Step      1: Ran <span style=color:#099>1</span> train steps in 815.40 secs
+Step      1: train CrossEntropyLoss |  2.97494578
+Step      1: <span style=color:#0086b3>eval</span>  CrossEntropyLoss |  5.96823492
+Step      1: <span style=color:#0086b3>eval</span>          Accuracy |  0.85458949
+
+Step     10: Ran <span style=color:#099>9</span> train steps in 6809.59 secs
+Step     10: train CrossEntropyLoss |  5.27117538
+Step     10: <span style=color:#0086b3>eval</span>  CrossEntropyLoss |  5.19212604
+Step     10: <span style=color:#0086b3>eval</span>          Accuracy |  0.85005882
+
+Step     20: Ran <span style=color:#099>10</span> train steps in 5372.06 secs
+Step     20: train CrossEntropyLoss |  6.68565750
+Step     20: <span style=color:#0086b3>eval</span>  CrossEntropyLoss |  4.00950582
+Step     20: <span style=color:#0086b3>eval</span>          Accuracy |  0.81635543
+
+Step     30: Ran <span style=color:#099>10</span> train steps in 1040.84 secs
+Step     30: train CrossEntropyLoss |  3.92878985
+Step     30: <span style=color:#0086b3>eval</span>  CrossEntropyLoss |  3.32506871
+Step     30: <span style=color:#0086b3>eval</span>          Accuracy |  0.78096363
+
+Step     40: Ran <span style=color:#099>10</span> train steps in 3624.02 secs
+Step     40: train CrossEntropyLoss |  3.41684675
+Step     40: <span style=color:#0086b3>eval</span>  CrossEntropyLoss |  3.47973170
+Step     40: <span style=color:#0086b3>eval</span>          Accuracy |  0.84054841
+
+Step     50: Ran <span style=color:#099>10</span> train steps in 195.43 secs
+Step     50: train CrossEntropyLoss |  2.64065409
+Step     50: <span style=color:#0086b3>eval</span>  CrossEntropyLoss |  2.21273057
+Step     50: <span style=color:#0086b3>eval</span>          Accuracy |  0.84472065
+
+Step     60: Ran <span style=color:#099>10</span> train steps in 1060.08 secs
+Step     60: train CrossEntropyLoss |  2.35068488
+Step     60: <span style=color:#0086b3>eval</span>  CrossEntropyLoss |  2.66343498
+Step     60: <span style=color:#0086b3>eval</span>          Accuracy |  0.84561690
+
+Step     70: Ran <span style=color:#099>10</span> train steps in 1041.36 secs
+Step     70: train CrossEntropyLoss |  2.30295134
+Step     70: <span style=color:#0086b3>eval</span>  CrossEntropyLoss |  1.31594980
+Step     70: <span style=color:#0086b3>eval</span>          Accuracy |  0.84971260
+
+Step     80: Ran <span style=color:#099>10</span> train steps in 1178.78 secs
+Step     80: train CrossEntropyLoss |  1.15712142
+Step     80: <span style=color:#0086b3>eval</span>  CrossEntropyLoss |  1.15898243
+Step     80: <span style=color:#0086b3>eval</span>          Accuracy |  0.84357584
+
+Step     90: Ran <span style=color:#099>10</span> train steps in 2033.67 secs
+Step     90: train CrossEntropyLoss |  1.06345284
+Step     90: <span style=color:#0086b3>eval</span>  CrossEntropyLoss |  0.93652567
+Step     90: <span style=color:#0086b3>eval</span>          Accuracy |  0.84781972
+
+Step    100: Ran <span style=color:#099>10</span> train steps in 2001.96 secs
+Step    100: train CrossEntropyLoss |  1.04488492
+Step    100: <span style=color:#0086b3>eval</span>  CrossEntropyLoss |  1.02899926
+Step    100: <span style=color:#0086b3>eval</span>          Accuracy |  0.85163420
+</code></pre></div><h1 id=references>References
+<a href=#references></a></h1><ul><li><p><a href=https://ai.googleblog.com/2020/01/reformer-efficient-transformer.html target=_blank rel=noopener>Google AI Blog- Reformer: The Efficient Transformer</a></p></li><li><p><a href=https://ai.googleblog.com/2017/08/transformer-novel-neural-network.html target=_blank rel=noopener>Google AI Blog- Transformer: A Novel Neural Network Architecture for Language Understanding</a></p></li><li><p><a href=https://github.com/google/trax target=_blank rel=noopener>Trax: Deep Learning with Clear Code and Speed</a></p></li><li><p><a href=http://jalammar.github.io/illustrated-transformer/ target=_blank rel=noopener>The Illustrated Transformer</a></p></li><li><p><a href=https://arxiv.org/abs/1706.03762 target=_blank rel=noopener>Attention Is All You Need</a></p></li><li><p><a href=https://towardsdatascience.com/illustrating-the-reformer-393575ac6ba0 target=_blank rel=noopener>Illustrating the Reformer</a></p></li></ul><details closed class="f6 fw7 input-reset"><dl class="f6 lh-copy"><dt class=fw7>Posted on:</dt><dd class="fw5 ml0">November 19, 2020</dd></dl><dl class="f6 lh-copy"><dt class=fw7>Length:</dt><dd class="fw5 ml0">8 minute read, 1602 words</dd></dl><dl class="f6 lh-copy"><dt class=fw7>Categories:</dt><dd class="fw5 ml0"><a href=https://sauravm.netlify.app/categories/nlp>NLP</a> <a href=https://sauravm.netlify.app/categories/transformers>Transformers</a></dd></dl><dl class="f6 lh-copy"><dt class=fw7>See Also:</dt></dl></details></section><footer class=post-footer><div class="post-pagination dt w-100 mt4 mb2"><a class="prev dtc pr2 tl v-top fw6" href=https://sauravm.netlify.app/blog/duck-typing-eafp/>&larr; Introduction to Duck Typing and EAFP</a>
+<a class="next dtc pl2 tr v-top fw6" href=https://sauravm.netlify.app/blog/regularized-greedy-forest/>Regularized Greedy Forest &rarr;</a></div></footer></article><div class="post-comments pa0 pa4-l mt4"><script src=https://utteranc.es/client.js repo=apreshill/apero issue-term=pathname theme=boxy-light label="comments :crystal_ball:" crossorigin=anonymous async type=text/javascript></script></div></section></main><footer class="site-footer pv4 bt b--transparent ph5" role=contentinfo><nav class="db dt-l w-100"><p class="site-copyright f7 db dtc-l v-mid w-100 w-33-l tc tl-l pv2 pv0-l mv0 lh-copy">&copy; 2021 Weights and Biases, New Delhi
+<span class=middot-divider></span>Made with <span xmlns:dct=http://purl.org/dc/terms/ property="dct:title"><a xmlns:dct=http://purl.org/dc/terms/ href=https://github.com/hugo-apero/ rel=dct:source>Hugo Apéro</a></span>.<br>Based on <span xmlns:dct=http://purl.org/dc/terms/ property="dct:title"><a xmlns:dct=http://purl.org/dc/terms/ href=https://github.com/formspree/blogophonic-hugo rel=dct:source>Blogophonic</a></span> by <a xmlns:cc=http://creativecommons.org/ns# href=https://formspree.io property="cc:attributionName" rel=cc:attributionurl>Formspree</a>.</p><div class="site-social-links db dtc-l v-mid w-100 w-33-l tc pv2 pv0-l mv0"><div class=social-icon-links aria-hidden=true><a class="link dib h1 w1 ml0 mr2 f6 o-90 glow" href=https://github.com/SauravMaheshkar title=github target=_blank rel=noopener><i class="fab fa-github fa-lg fa-fw"></i></a>
+<a class="link dib h1 w1 ml0 mr2 f6 o-90 glow" href=https://www.instagram.com/sauravvmaheshkar/ title=instagram target=_blank rel=noopener><i class="fab fa-instagram fa-lg fa-fw"></i></a>
+<a class="link dib h1 w1 ml0 mr2 f6 o-90 glow" href=https://twitter.com/MaheshkarSaurav title=twitter target=_blank rel=noopener><i class="fab fa-twitter fa-lg fa-fw"></i></a>
+<a class="link dib h1 w1 ml0 mr2 f6 o-90 glow" href=https://orcid.org/0000-0002-5371-4651 title=orcid target=_blank rel=noopener><i class="ai ai-orcid fa-lg fa-fw"></i></a>
+<a class="link dib h1 w1 ml0 mr2 f6 o-90 glow" href=/blog/index.xml title=rss><i class="fas fa-rss fa-lg fa-fw"></i></a></div></div><div class="site-links f6 db dtc-l v-mid w-100 w-67-l tc tr-l pv2 pv0-l mv0"><a class="dib pv1 ph2 link" href=/license/ title=License>License</a>
+<a class="dib pv1 ph2 link" href=/contact/ title="Contact form">Contact</a></div></nav></footer></div></body></html>
